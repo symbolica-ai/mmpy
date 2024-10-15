@@ -1,5 +1,5 @@
 import os
-from . import database as md
+from ..metamathpy import database as md
 
 def load_imp(fpath = None):
     # last label before any ax-3 proofs is loowoz
@@ -40,6 +40,6 @@ if __name__ == "__main__":
 
     # db = load_imp()
     # db = load_ni()
-    # db = load_pl()
+    db = load_pl()
     db.print()
 

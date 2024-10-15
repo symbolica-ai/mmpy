@@ -175,31 +175,20 @@ def conduct(rule, stack, disjoint=None):
     # # return results of step
     # return ProofStep(conclusion, rule, dependencies, substitution)
 
-
-def step_to_label(step) -> str:
-    if isinstance(step, ProofStep):
-        label = step.rule.consequent.label
-    elif isinstance(step, str):
-        label = step
-    else: 
-        assert False, f"Unexpected type: {type(step)}"
-    return label
-
-
+"""
+claim: a rule object whose proof will be verified
+returns root of proof tree and dictionary of proof step nodes
+raises error if proof invalid
+"""
 @profile
 def verify_normal_proof(database, claim):
-    """
-    claim: a rule object whose proof will be verified
-    returns root of proof tree and dictionary of proof step nodes
-    raises error if proof invalid
-    """
 
     # initialize stack of proof steps
     stack = []
 
     # initialize set of proof steps, indexed by conclusion (tupled for hashability)
     proof_steps = {}
-    proof_labels = []
+
     # process each label in proof
     for step, step_label in enumerate(claim.consequent.proof):
 
@@ -210,8 +199,6 @@ def verify_normal_proof(database, claim):
         rule = database.rules[step_label]
         proof_step, msg = conduct(rule, stack, claim.disjoint)
         assert msg == "", msg
-        step_label = step_to_label(proof_step)
-        proof_labels.append(step_label)
         conclusion = proof_step.conclusion
 
         # save new proof steps
@@ -227,19 +214,15 @@ def verify_normal_proof(database, claim):
            f"proved statement {' '.join(stack[0].conclusion)} does not match theorem {' '.join(claim.consequent.tokens)}"
 
     # return root of proof graph and dictionary of nodes
-    return stack[0], proof_steps, proof_labels
+    return stack[0], proof_steps
 
-
-            
-
-
+"""
+claim: a rule object whose proof will be verified
+returns root of proof tree and dictionary of proof step nodes
+raises error if proof invalid
+"""
 @profile
 def verify_compressed_proof(database, claim):
-    """
-    claim: a rule object whose proof will be verified
-    returns root of proof tree and dictionary of proof step nodes
-    raises error if proof invalid
-    """
 
     # extract labels and mixed-radix pointer encodings
     split = claim.consequent.proof.index(")")
@@ -274,8 +257,6 @@ def verify_compressed_proof(database, claim):
     # step labels
     proof_steps += step_labels
 
-    stack_hist = []
-    proof_labels = []
     # process each step in proof
     for step, pointer in enumerate(step_pointers):
 
@@ -287,8 +268,6 @@ def verify_compressed_proof(database, claim):
 
             # retrieve current step
             proof_step = proof_steps[pointer]
-            proof_step_label = step_to_label(proof_step)
-            proof_labels.append(proof_step_label)
 
             # replace labels by associated step
             if type(proof_step) is str:
@@ -297,8 +276,6 @@ def verify_compressed_proof(database, claim):
                 proof_step_dict[proof_step.conclusion] = proof_step
 
             # push current proof step onto stack
-
-            stack_hist.append(" ".join(proof_step.conclusion))
             stack.append(proof_step)
 
     # check that original claim has been proved
@@ -307,25 +284,14 @@ def verify_compressed_proof(database, claim):
     assert len(stack) == 1, f"non-singleton stack {stack} after proof"
 
     # return root of proof graph and dictionary of nodes
-    return stack[0], proof_step_dict, proof_labels
-
-def extract_proof_labels(database, claim):
-    # compressed proofs start with "(" token
-    if not claim.consequent.proof:
-        return []
-
-    if claim.consequent.proof[0] == "(":
-        return verify_compressed_proof(database, claim)[-1]
-    else:
-        return verify_normal_proof(database, claim)[-1]
-
+    return stack[0], proof_step_dict
 
 def verify_proof(database, claim):
     # compressed proofs start with "(" token
     if claim.consequent.proof[0] == "(":
-        return verify_compressed_proof(database, claim)[:2]
+        return verify_compressed_proof(database, claim)
     else:
-        return verify_normal_proof(database, claim)[:2]
+        return verify_normal_proof(database, claim)
 
 @profile
 def verify_all(database, start=0, stop=-1):

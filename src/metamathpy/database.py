@@ -58,7 +58,7 @@ class Database:
             if not (start <= r < stop): continue
             print(rule)
 
-    def dump(self):
+    def dump(self, fname):
 
         tokens = set([tok for stmt in self.statements.values() for tok in stmt.tokens])
         variables = set([var for rule in self.rules.values() for var in rule.variables])
@@ -67,7 +67,6 @@ class Database:
         # print(variables)
         # print(constants)
         # with open(fname, "w") as f: f.write(s)
-        return tokens, variables, constants
 
 @profile
 def parse(fpath, max_rules=-1, last_rule=""):
@@ -97,7 +96,7 @@ def parse(fpath, max_rules=-1, last_rule=""):
                 #     db.print(start=-2)
                 #     print(f"token='{token}', label='{label}', tag='{current_tag}'")
                 #     print(statement)
-                #     input('..')
+                #     input('..')    
 
                 # skip comments
                 if token == "$(": in_comment = True
@@ -201,7 +200,7 @@ if __name__ == "__main__":
 
     # for (label, stmt) in db.statements.items():
     #     print(label, stmt)
-
+    
     # print(db.rules['df-alsc'])
     # print(db.rules['alsconv'])
 
